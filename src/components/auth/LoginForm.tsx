@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { supabase } from "@/lib/supabase";  // your Supabase client
 
 const LoginForm = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -15,11 +16,11 @@ const LoginForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Basic form validation
-    if (!email || !password) {
+  
+    if (!email || !password || (!isLogin && !confirmPassword)) {
       toast({
         title: "Error",
         description: "Please fill in all fields",
@@ -27,7 +28,7 @@ const LoginForm = () => {
       });
       return;
     }
-    
+  
     if (!isLogin && password !== confirmPassword) {
       toast({
         title: "Error",
@@ -36,16 +37,66 @@ const LoginForm = () => {
       });
       return;
     }
-
-    // For demo purposes, we'll just navigate to the home page
-    // In a real app, we would authenticate with Supabase here
-    toast({
-      title: isLogin ? "Logged in!" : "Registered!",
-      description: "Welcome to FitSync",
-    });
-    
-    navigate("/home");
+  
+    try {
+      if (isLogin) {
+        // LOGIN FLOW
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+  
+        if (error) {
+          toast({
+            title: "Login failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+  
+        toast({
+          title: "Logged in!",
+          description: "Welcome back!",
+        });
+  
+        navigate("/home");
+  
+      } else {
+        // SIGNUP FLOW
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+        });
+  
+        if (error) {
+          toast({
+            title: "Signup failed",
+            description: error.message,
+            variant: "destructive",
+          });
+          return;
+        }
+  
+        toast({
+          title: "Account created!",
+          description: "Please check your email to confirm your account.",
+        });
+  
+        navigate("/home");
+      }
+  
+    } catch (err) {
+      console.error(err);
+      toast({
+        title: "Unexpected error",
+        description: "Something went wrong",
+        variant: "destructive",
+      });
+    }
   };
+  
+  
 
   return (
     <Card className="w-full max-w-md animate-fade-in">
