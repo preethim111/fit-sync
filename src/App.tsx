@@ -7,10 +7,15 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import WorkoutPage from "./pages/WorkoutPage";
 import NotFound from "./pages/NotFound";
+import { SessionContextProvider } from '@supabase/auth-helpers-react';
+import { supabase } from './lib/supabase';
+
+
 
 const queryClient = new QueryClient();
 
 const App = () => (
+  <SessionContextProvider supabaseClient={supabase}>
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
@@ -25,6 +30,7 @@ const App = () => (
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+  </SessionContextProvider>
 );
 
 export default App;
