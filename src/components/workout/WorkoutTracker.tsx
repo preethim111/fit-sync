@@ -265,6 +265,7 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
         console.log('User pose detected, frame count:', frameCount);
         // Only collect landmarks every half second
         if (frameCount % FRAME_INTERVAL === 0) {
+          console.log('User pose visibility:', results.poseLandmarks.map(lm => lm.visibility));
           console.log('Collecting user pose frame', results.poseLandmarks);
           setUserPoseSequence(prev => [...prev, results.poseLandmarks]);
         }
@@ -363,29 +364,75 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
     }
 
     // Extract only the keypoints we care about
-    const cleanedReference = referencePoseSequence.map(frame => {
-      const landmarkDict: { [key: string]: [number, number, number] } = {};
+    // const cleanedReference = referencePoseSequence.map(frame => {
+    //   const landmarkDict: { [key: string]: [number, number, number] } = {};
+    //   KEYPOINTS.forEach(keypoint => {
+    //     const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
+    //     const landmark = frame[index];
+    //     if (landmark) {
+    //       landmarkDict[keypoint] = [landmark.x, -landmark.y, -landmark.z];
+    //     }
+    //   });
+    //   return Object.values(landmarkDict);
+    // });
+
+    // const cleanedUser = userPoseSequence.map(frame => {
+    //   const landmarkDict: { [key: string]: [number, number, number] } = {};
+    //   KEYPOINTS.forEach(keypoint => {
+    //     const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
+    //     const landmark = frame[index];
+    //     if (landmark) {
+    //       landmarkDict[keypoint] = [landmark.x, -landmark.y, -landmark.z];
+    //     }
+    //   });
+    //   return Object.values(landmarkDict);
+    // });
+
+    const cleanedUser: number[][][] = [];
+    const visibilityMatrix: number[][] = [];
+
+    userPoseSequence.forEach(frame => {
+      const jointCoords: number[][] = [];
+      const jointVisibility: number[] = [];
+
       KEYPOINTS.forEach(keypoint => {
         const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
+        console.log('Index:', index);
         const landmark = frame[index];
         if (landmark) {
-          landmarkDict[keypoint] = [landmark.x, -landmark.y, -landmark.z];
+          jointCoords.push([landmark.x, -landmark.y, -landmark.z]);
+          jointVisibility.push(landmark.visibility ?? 0); // fallback to 0
         }
+        console.log('Landmark:', landmark);
       });
-      return Object.values(landmarkDict);
+
+      cleanedUser.push(jointCoords);
+      visibilityMatrix.push(jointVisibility);
+      console.log('Visbility Matrix:', visibilityMatrix);
     });
 
-    const cleanedUser = userPoseSequence.map(frame => {
-      const landmarkDict: { [key: string]: [number, number, number] } = {};
+
+    const cleanedReference: number[][][] = [];
+    const referenceVisibilityMatrix: number[][] = [];
+
+    referencePoseSequence.forEach(frame => {
+      const jointCoords: number[][] = [];
+      const jointVisibility: number[] = [];
+
       KEYPOINTS.forEach(keypoint => {
         const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
         const landmark = frame[index];
         if (landmark) {
-          landmarkDict[keypoint] = [landmark.x, -landmark.y, -landmark.z];
+          jointCoords.push([landmark.x, -landmark.y, -landmark.z]);
+          jointVisibility.push(landmark.visibility ?? 0);
         }
       });
-      return Object.values(landmarkDict);
+
+      cleanedReference.push(jointCoords);
+      referenceVisibilityMatrix.push(jointVisibility);
     });
+
+
 
     // Ensure both sequences have the same length
     const minLength = Math.min(cleanedReference.length, cleanedUser.length);
@@ -401,7 +448,8 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
         reference_poses: finalReference,
         user_poses: finalUser,
         video_reference: referenceVideo,
-        difficulty_level: difficulty
+        difficulty_level: difficulty,
+        visibility_matrix: visibilityMatrix
       })
     });
 

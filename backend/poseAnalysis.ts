@@ -1,81 +1,96 @@
 import { tensor1d, tensor3d, sum, mul, norm, dispose } from '@tensorflow/tfjs';
 
-// export interface Point3D [
-//   number;
-//   number;
-//   z: number;
-//   visibility: number;
-// ]
 
-// export type Pose = number[][][];
+// export type PoseSequence = number[][][];
+
+// export function calculateJointWeights(referencePoses: PoseSequence): number[] {
+//   const numJoints = 12; // MediaPipe model joints
+//   const jointDisplacements = new Array(numJoints).fill(0);
+
+//   for (let j = 0; j < numJoints; j++) {
+//     // Extract coordinates for this joint across all frames
+//     const coords = referencePoses.map(frame => frame[j]);
+    
+//     // Calculate differences between consecutive frames
+//     const diffs = [];
+//     for (let i = 1; i < coords.length; i++) {
+//       const dx = coords[i][0] - coords[i-1][0];
+//       const dy = coords[i][1] - coords[i-1][1];
+//       const dz = coords[i][2] - coords[i-1][2];
+//       diffs.push(Math.sqrt(dx*dx + dy*dy + dz*dz));
+//     }
+    
+//     // Sum all displacements for this joint
+//     jointDisplacements[j] = diffs.reduce((sum, val) => sum + val, 0);
+//   }
+
+
+
+//   // Calculate weights by normalizing displacements
+//   const totalDisplacement = jointDisplacements.reduce((sum, val) => sum + val, 0);
+//   return jointDisplacements.map(disp => disp / totalDisplacement);
+// }
+
+////////////////////////////////////////////////////////////
 export type PoseSequence = number[][][];
+export type VisibilityMatrix = number[][];
 
-export function calculateJointWeights(referencePoses: PoseSequence): number[] {
-  const numJoints = 12; // MediaPipe model joints
+export function calculateJointWeights(
+  referencePoses: PoseSequence,     // [frames][joints][3]
+  userVisibility: VisibilityMatrix,       // [frames][joints]
+  visibleThreshold = 0.5,
+  visibilityCutoffRatio = 0.4
+): number[] {
+  console.log('User visibility:', userVisibility);
+  const numFrames = referencePoses.length;
+  const numJoints = referencePoses[0].length;
   const jointDisplacements = new Array(numJoints).fill(0);
 
   for (let j = 0; j < numJoints; j++) {
-    // Extract coordinates for this joint across all frames
-    const coords = referencePoses.map(frame => frame[j]);
-    
-    // Calculate differences between consecutive frames
-    const diffs = [];
-    for (let i = 1; i < coords.length; i++) {
-      const dx = coords[i][0] - coords[i-1][0];
-      const dy = coords[i][1] - coords[i-1][1];
-      const dz = coords[i][2] - coords[i-1][2];
-      diffs.push(Math.sqrt(dx*dx + dy*dy + dz*dz));
+    let visibleCount = 0;
+
+    for (let f = 0; f < numFrames; f++) {
+      if (userVisibility[f][j] >= visibleThreshold) visibleCount++;
     }
+
     
-    // Sum all displacements for this joint
-    jointDisplacements[j] = diffs.reduce((sum, val) => sum + val, 0);
+    const visibilityRatio = visibleCount / numFrames;
+
+    if (visibilityRatio < (1 - visibilityCutoffRatio)) {
+      jointDisplacements[j] = 0;
+      continue;
+    }
+
+    let sum = 0;
+    for (let i = 1; i < numFrames; i++) {
+      const visible = userVisibility[i][j] >= visibleThreshold && userVisibility[i - 1][j] >= visibleThreshold;
+      if (!visible) continue;
+
+      const prev = referencePoses[i - 1][j];
+      const curr = referencePoses[i][j];
+      const dx = curr[0] - prev[0];
+      const dy = curr[1] - prev[1];
+      const dz = curr[2] - prev[2];
+      sum += Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    jointDisplacements[j] = sum;
   }
 
-  // Calculate weights by normalizing displacements
-  const totalDisplacement = jointDisplacements.reduce((sum, val) => sum + val, 0);
-  return jointDisplacements.map(disp => disp / totalDisplacement);
+  console.log('Joint Displacements:', jointDisplacements);
+
+
+  const total = jointDisplacements.reduce((a, b) => a + b, 0);
+  return total === 0
+    ? jointDisplacements.map(() => 1 / numJoints)
+    : jointDisplacements.map(d => d / total);
 }
 
 
-// export function weightedCosineSimilarity(
-//   refVec: number[][][],
-//   userVec: number[][][],
-//   weights: number[]
-// ): number {
-//   // Expand weights: each joint's weight is repeated for x, y, z, visibility
-//   // const weightsExpanded = weights.map(w => [[w, w, w]]);
 
-//   const weightsExpanded = Array(weights.length*3).flatMap(() =>
-//     weights.flatMap(w => [w, w, w]) // or [w, w, w, w] if visibility is included
-//   );
 
-//   // if (weightsExpanded.length !== refVec.length || refVec.length !== userVec.length) {
-//   //   throw new Error(`Vector length mismatch: ref=${refVec.length}, user=${userVec.length}, weights=${weightsExpanded.length}`);
-//   // }
 
-//   // Convert arrays to tensors for efficient computation
-//   const refTensor = tensor3d(refVec);
-//   const userTensor = tensor3d(userVec);
-//   const weightsTensor = tensor3d(weightsExpanded);
 
-//   // Calculate weighted dot product
-//   const dot = sum(mul(mul(weightsTensor, refTensor), userTensor));
-
-//   // Calculate weighted norms
-//   const normRef = norm(mul(weightsTensor, refTensor));
-//   const normUser = norm(mul(weightsTensor, userTensor));
-
-//   // Calculate similarity with small epsilon to prevent division by zero
-//   const similarity = dot.div(normRef.mul(normUser).add(1e-8));
-
-//   // Get the result as a number
-//   const result = similarity.dataSync()[0];
-
-//   // Clean up tensors
-//   dispose([refTensor, userTensor, weightsTensor, dot, normRef, normUser, similarity]);
-
-//   return result;
-// }
 
 
 export function weightedCosineSimilarity(
@@ -102,17 +117,40 @@ export function weightedCosineSimilarity(
   const userTensor = tensor3d(userVec);
   const weightsTensor = tensor3d(weightsExpanded);
 
-  // Compute weighted dot product
-  const dot = sum(mul(mul(weightsTensor, refTensor), userTensor));
+  // // Compute weighted dot product
+  // const dot = sum(mul(mul(weightsTensor, refTensor), userTensor));
 
   // Compute norms
-  const normRef = norm(mul(weightsTensor, refTensor));
-  const normUser = norm(mul(weightsTensor, userTensor));
+  // const weightedRef = norm(mul(weightsTensor, refTensor));
+  // const weightedUser = norm(mul(weightsTensor, userTensor));
 
-  const similarity = dot.div(normRef.mul(normUser).add(1e-8));
-  const result = similarity.dataSync()[0];
 
-  dispose([refTensor, userTensor, weightsTensor, dot, normRef, normUser, similarity]);
+  // console.log('dot:', dot.dataSync()[0]);
+  // console.log('normRef:', normRef.dataSync()[0]);
+  // console.log('normUser:', normUser.dataSync()[0]);
+
+
+  // const similarity = dot.div(normRef.mul(normUser).add(1e-8));
+  // const result = similarity.dataSync()[0];
+
+   // ✅ Apply weights to both vectors
+   const weightedRef = mul(weightsTensor, refTensor);
+   const weightedUser = mul(weightsTensor, userTensor);
+ 
+   // ✅ Compute dot product and norms
+   const dot = sum(mul(weightedRef, weightedUser));
+   const normRef = norm(weightedRef);                        
+   const normUser = norm(weightedUser);  
+ 
+  //  console.log('dot:', dot.dataSync()[0]);
+  //  console.log('normRef:', normRef.dataSync()[0]);
+  //  console.log('normUser:', normUser.dataSync()[0]);
+ 
+   // ✅ Compute similarity
+   const similarity = dot.div(normRef.mul(normUser).add(1e-8)); // avoid /0
+   const result = similarity.dataSync()[0];
+
+  dispose([refTensor, userTensor, weightsTensor, dot, weightedRef, weightedUser, similarity]);
 
   return result;
 }

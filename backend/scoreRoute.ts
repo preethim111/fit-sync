@@ -105,7 +105,7 @@
 // export default router;
 
 
-import { calculateJointWeights, weightedCosineSimilarity, PoseSequence } from './poseAnalysis';
+import { calculateJointWeights, weightedCosineSimilarity, PoseSequence, VisibilityMatrix } from './poseAnalysis';
 import { Router, Request, Response } from 'express';
 
 const router = Router();
@@ -115,19 +115,23 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   try {
     console.log('Received POST to /api/score');
 
-    const { user_id, reference_poses, user_poses, video_reference, difficulty_level } = req.body;
+    const { user_id, reference_poses, user_poses, video_reference, difficulty_level, visibility_matrix } = req.body;
 
     if (!reference_poses || !user_poses) {
       res.status(400).json({ error: 'Missing required fields: reference_poses and user_poses' });
       return;
     }
 
-    const jointWeights = calculateJointWeights(reference_poses);
-    const flatten = (poses: PoseSequence) =>
-      poses.flat().flatMap(p => [p[0], p[1], p[2]]);
+    const jointWeights = calculateJointWeights(reference_poses, visibility_matrix);
+    // const flatten = (poses: PoseSequence) =>
+    //   poses.flat().flatMap(p => [p[0], p[1], p[2]]);
+    console.log('Joint Weights:', jointWeights);
 
     const refVec = reference_poses;
     const userVec = user_poses;
+
+    console.log('Reference Vector:', refVec);
+    console.log('User Vector:', userVec);
 
     console.log(`refVec.length = ${refVec.length}`);
     console.log(`userVec.length = ${userVec.length}`);
