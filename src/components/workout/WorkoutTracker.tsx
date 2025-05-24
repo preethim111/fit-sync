@@ -29,6 +29,22 @@ const KEYPOINTS = [
   "RIGHT_ANKLE"
 ] as const;
 
+// Define limb vectors (connections between joints)
+const LIMB_VECTORS = [
+  ["LEFT_WRIST", "LEFT_ELBOW"],
+  ["LEFT_ELBOW", "LEFT_SHOULDER"],
+  ["LEFT_SHOULDER", "RIGHT_SHOULDER"],
+  ["RIGHT_WRIST", "RIGHT_ELBOW"],
+  ["RIGHT_ELBOW", "RIGHT_SHOULDER"],
+  ["LEFT_SHOULDER", "LEFT_HIP"],
+  ["RIGHT_SHOULDER", "RIGHT_HIP"],
+  ["LEFT_HIP", "RIGHT_HIP"],
+  ["LEFT_HIP", "LEFT_KNEE"],
+  ["LEFT_KNEE", "LEFT_ANKLE"],
+  ["RIGHT_HIP", "RIGHT_KNEE"],
+  ["RIGHT_KNEE", "RIGHT_ANKLE"]
+] as const;
+
 const FRAME_INTERVAL = 30; // Process every 30th frame (2 frames per second at 60fps)
 let frameCount = 0;
 
@@ -344,9 +360,27 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
 
   // Helper to clean pose data
   function cleanPoseSequence(sequence: any[][]) {
-    return sequence.map(frame =>
-      frame.map(({ x, y, z }: any) => ({ x, y, z }))
-    );
+    return sequence.map(frame => {
+      const jointCoords: number[][] = [];
+      const jointVisibility: number[] = [];
+
+      KEYPOINTS.forEach(keypoint => {
+        const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
+        const landmark = frame[index];
+        if (landmark) {
+          jointCoords.push([landmark.x, -landmark.y, -landmark.z]);
+          jointVisibility.push(landmark.visibility ?? 0);
+        } else {
+          jointCoords.push([0, 0, 0]);
+          jointVisibility.push(0);
+        }
+      });
+
+      return {
+        coords: jointCoords,
+        visibility: jointVisibility
+      };
+    });
   }
 
   // Function to submit score
@@ -363,81 +397,14 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
       return;
     }
 
-    // Extract only the keypoints we care about
-    // const cleanedReference = referencePoseSequence.map(frame => {
-    //   const landmarkDict: { [key: string]: [number, number, number] } = {};
-    //   KEYPOINTS.forEach(keypoint => {
-    //     const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
-    //     const landmark = frame[index];
-    //     if (landmark) {
-    //       landmarkDict[keypoint] = [landmark.x, -landmark.y, -landmark.z];
-    //     }
-    //   });
-    //   return Object.values(landmarkDict);
-    // });
-
-    // const cleanedUser = userPoseSequence.map(frame => {
-    //   const landmarkDict: { [key: string]: [number, number, number] } = {};
-    //   KEYPOINTS.forEach(keypoint => {
-    //     const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
-    //     const landmark = frame[index];
-    //     if (landmark) {
-    //       landmarkDict[keypoint] = [landmark.x, -landmark.y, -landmark.z];
-    //     }
-    //   });
-    //   return Object.values(landmarkDict);
-    // });
-
-    const cleanedUser: number[][][] = [];
-    const visibilityMatrix: number[][] = [];
-
-    userPoseSequence.forEach(frame => {
-      const jointCoords: number[][] = [];
-      const jointVisibility: number[] = [];
-
-      KEYPOINTS.forEach(keypoint => {
-        const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
-        console.log('Index:', index);
-        const landmark = frame[index];
-        if (landmark) {
-          jointCoords.push([landmark.x, -landmark.y, -landmark.z]);
-          jointVisibility.push(landmark.visibility ?? 0); // fallback to 0
-        }
-        console.log('Landmark:', landmark);
-      });
-
-      cleanedUser.push(jointCoords);
-      visibilityMatrix.push(jointVisibility);
-      console.log('Visbility Matrix:', visibilityMatrix);
-    });
-
-
-    const cleanedReference: number[][][] = [];
-    const referenceVisibilityMatrix: number[][] = [];
-
-    referencePoseSequence.forEach(frame => {
-      const jointCoords: number[][] = [];
-      const jointVisibility: number[] = [];
-
-      KEYPOINTS.forEach(keypoint => {
-        const index = POSE_LANDMARKS[keypoint as keyof typeof POSE_LANDMARKS];
-        const landmark = frame[index];
-        if (landmark) {
-          jointCoords.push([landmark.x, -landmark.y, -landmark.z]);
-          jointVisibility.push(landmark.visibility ?? 0);
-        }
-      });
-
-      cleanedReference.push(jointCoords);
-      referenceVisibilityMatrix.push(jointVisibility);
-    });
-
-
+    const cleanedUser = cleanPoseSequence(userPoseSequence);
+    const cleanedReference = cleanPoseSequence(referencePoseSequence);
 
     // Ensure both sequences have the same length
     const minLength = Math.min(cleanedReference.length, cleanedUser.length);
-    const finalReference = cleanedReference.slice(0, minLength);
-    const finalUser = cleanedUser.slice(0, minLength);
+    const finalReference = cleanedReference.slice(0, minLength).map(frame => frame.coords);
+    const finalUser = cleanedUser.slice(0, minLength).map(frame => frame.coords);
+    const visibilityMatrix = cleanedUser.slice(0, minLength).map(frame => frame.visibility);
 
     console.log('Sending score request to backend');
     const res = await fetch('http://localhost:4000/api/score', {
