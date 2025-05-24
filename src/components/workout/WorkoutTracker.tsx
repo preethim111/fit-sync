@@ -407,28 +407,29 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
     const visibilityMatrix = cleanedUser.slice(0, minLength).map(frame => frame.visibility);
 
     console.log('Sending score request to backend');
-    const res = await fetch('http://localhost:4000/api/score', {
+    const response = await fetch('http://localhost:4000/api/score', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         user_id: user.id,
         reference_poses: finalReference,
         user_poses: finalUser,
-        video_reference: referenceVideo,
         difficulty_level: difficulty,
         visibility_matrix: visibilityMatrix
-      })
+      }),
     });
 
-    if (!res.ok) {
-      console.log('String response JSON:', await res.text());
-      console.error('Score submission failed:', res.status);
-      const { error } = await res.json();
+    if (!response.ok) {
+      console.log('String response JSON:', await response.text());
+      console.error('Score submission failed:', response.status);
+      const { error } = await response.json();
       toast({ title: 'Error', description: error, variant: 'destructive' });
       return;
     }
 
-    const { score, best_score } = await res.json();
+    const { score, best_score } = await response.json();
     console.log('Score received:', { score, best_score });
     setScore(score);
     setBestScore(best_score);
