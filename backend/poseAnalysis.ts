@@ -105,27 +105,14 @@ export function calculateJointWeights(
   const limbDisplacements = new Array(numLimbs).fill(0);
 
   for (let l = 0; l < numLimbs; l++) {
-    let visibleCount = 0;
+    const diffs: number[] = [];
     const [fromJoint, toJoint] = LIMB_VECTORS[l];
     const fromIndex = l * 2;
     const toIndex = l * 2 + 1;
 
-    for (let f = 0; f < numFrames; f++) {
-      if (userVisibility[f][fromIndex] >= visibleThreshold && 
-          userVisibility[f][toIndex] >= visibleThreshold) {
-        visibleCount++;
-      }
-    }
-
-    const visibilityRatio = visibleCount / numFrames;
-
-    if (visibilityRatio < (1 - visibilityCutoffRatio)) {
-      limbDisplacements[l] = 0;
-      continue;
-    }
-
-    let sum = 0;
+    // For each frame:
     for (let i = 1; i < numFrames; i++) {
+      // 1. Check visibility
       const fromVisible = userVisibility[i][fromIndex] >= visibleThreshold && 
                          userVisibility[i-1][fromIndex] >= visibleThreshold;
       const toVisible = userVisibility[i][toIndex] >= visibleThreshold && 
@@ -133,64 +120,29 @@ export function calculateJointWeights(
       
       if (!fromVisible || !toVisible) continue;
 
+      // 2. Calculate normalized vectors for current and previous frame
       const prevFrame = referencePoses[i-1];
       const currFrame = referencePoses[i];
-      
-      // Calculate previous limb vector
-      const prevFrom = prevFrame[fromIndex];
-      const prevTo = prevFrame[toIndex];
-      const prevVector = [
-        prevTo[0] - prevFrom[0],
-        prevTo[1] - prevFrom[1],
-        prevTo[2] - prevFrom[2]
-      ];
-      
-      // Calculate current limb vector
-      const currFrom = currFrame[fromIndex];
-      const currTo = currFrame[toIndex];
-      const currVector = [
-        currTo[0] - currFrom[0],
-        currTo[1] - currFrom[1],
-        currTo[2] - currFrom[2]
-      ];
-      
-      // Calculate difference between normalized vectors
-      const prevMagnitude = Math.sqrt(
-        prevVector[0] * prevVector[0] + 
-        prevVector[1] * prevVector[1] + 
-        prevVector[2] * prevVector[2]
+      // fills in with 1s if the joint is visible 
+      const prevVector = calculateLimbVectors(prevFrame, Array(prevFrame.length).fill(1));
+      const currVector = calculateLimbVectors(currFrame, Array(currFrame.length).fill(1));
+
+      // 3. Calculate difference between normalized vectors using Euclidean distance
+      const diff = Math.sqrt(
+        Math.pow(currVector[0][0] - prevVector[0][0], 2) +
+        Math.pow(currVector[0][1] - prevVector[0][1], 2) +
+        Math.pow(currVector[0][2] - prevVector[0][2], 2)
       );
-      const currMagnitude = Math.sqrt(
-        currVector[0] * currVector[0] + 
-        currVector[1] * currVector[1] + 
-        currVector[2] * currVector[2]
-      );
-      
-      if (prevMagnitude > 0 && currMagnitude > 0) {
-        const prevNormalized = [
-          prevVector[0] / prevMagnitude,
-          prevVector[1] / prevMagnitude,
-          prevVector[2] / prevMagnitude
-        ];
-        const currNormalized = [
-          currVector[0] / currMagnitude,
-          currVector[1] / currMagnitude,
-          currVector[2] / currMagnitude
-        ];
-        
-        const diff = Math.sqrt(
-          Math.pow(currNormalized[0] - prevNormalized[0], 2) +
-          Math.pow(currNormalized[1] - prevNormalized[1], 2) +
-          Math.pow(currNormalized[2] - prevNormalized[2], 2)
-        );
-        
-        sum += diff;
-      }
+
+      // 4. Add to diffs array
+      diffs.push(diff);
     }
 
-    limbDisplacements[l] = sum;
+    // Sum all differences for this limb 
+    limbDisplacements[l] = diffs.reduce((sum, val) => sum + val, 0);
   }
 
+  // Normalize weights --> sum of normalized differences are the weights
   const total = limbDisplacements.reduce((a, b) => a + b, 0);
   return total === 0
     ? limbDisplacements.map(() => 1 / numLimbs)
