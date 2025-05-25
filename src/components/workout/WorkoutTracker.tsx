@@ -7,11 +7,13 @@ import { useToast } from '@/components/ui/use-toast';
 import { useUser } from '@supabase/auth-helpers-react';
 import { POSE_LANDMARKS } from '@mediapipe/pose';
 import { supabase } from '@/lib/supabase';
+import { ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { getExerciseVideo } from '@/config/exercises';
 
 interface WorkoutTrackerProps {
-  referenceVideo?: string;
-  difficulty: 'easy' | 'medium' | 'hard';
   exerciseName: string;
+  difficulty: 'easy' | 'medium' | 'hard';
 }
 
 // Only include upper-body and leg joints
@@ -49,8 +51,8 @@ const LIMB_VECTORS = [
 const FRAME_INTERVAL = 30; // Process every 30th frame (2 frames per second at 60fps)
 let frameCount = 0;
 
-const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTrackerProps) => {
-  console.log('WorkoutTracker initialized with:', { referenceVideo, difficulty, exerciseName });
+const WorkoutTracker = ({ exerciseName, difficulty }: WorkoutTrackerProps) => {
+  console.log('WorkoutTracker initialized with:', { exerciseName, difficulty });
   
   const videoRef = useRef<HTMLVideoElement>(null);
   const referenceVideoRef = useRef<HTMLVideoElement>(null);
@@ -66,6 +68,11 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
   const user = useUser();
   console.log('User state:', user);
   const { toast } = useToast();
+  const navigate = useNavigate();
+
+  // Get the video path based on exercise name and difficulty
+  const videoConfig = getExerciseVideo(exerciseName, difficulty);
+  const referenceVideo = videoConfig?.path;
 
   // Initialize camera on mount
   useEffect(() => {
@@ -434,7 +441,7 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
     console.log('Score received:', { score, best_score });
     setScore(score);
     setBestScore(best_score);
-    toast({ title: 'Score Submitted', description: `Your score: ${score}\nBest score: ${best_score}` });
+    toast({ title: 'Score Submitted', description: `Your score: ${(score * 100).toFixed(2)}%` });
 
     // Fetch recent score
     const { data: recentData, error: recentError } = await supabase
@@ -479,10 +486,20 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
-      <CardHeader>
-        <CardTitle className="text-2xl font-bold">
-          {exerciseName} - {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-        </CardTitle>
+      <CardHeader className="flex flex-row items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="rounded-full bg-buddy-purple hover:bg-buddy-purple-dark" 
+            onClick={() => navigate("/home")}
+          >
+            <ArrowLeft size={20} className="text-white" />
+          </Button>
+          <CardTitle className="text-2xl font-bold">
+            {exerciseName} - {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+          </CardTitle>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
@@ -491,14 +508,14 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
               ref={videoRef}
               className="w-full rounded-lg"
               playsInline
-              style={{ display: 'block' }}
+              style={{ display: 'block', transform: 'scaleX(-1)' }}
             />
             <canvas
               ref={canvasRef}
               className="absolute top-0 left-0 w-full h-full"
               width={640}
               height={480}
-              style={{ display: 'block' }}
+              style={{ display: 'block', transform: 'scaleX(-1)' }}
             />
             {cameraError && (
               <div className="absolute inset-0 flex items-center justify-center bg-red-100 rounded-lg">
@@ -540,14 +557,20 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
           <Button 
             onClick={submitScore} 
             disabled={isUserTracking || isRefTracking || userPoseSequence.length === 0 || referencePoseSequence.length === 0}
+            className="bg-buddy-purple hover:bg-buddy-purple-dark"
           >
-            Submit Score
+            Calculate Score
           </Button>
         </div>
         {score !== null && bestScore !== null && (
-          <div className="text-center mt-4">
-            <p>Your score: <span className="font-bold">{score.toFixed(3)}</span></p>
-            <p>Your best score: <span className="font-bold">{bestScore.toFixed(3)}</span></p>
+          <div className="mt-6 p-4 bg-buddy-purple-light/20 rounded-lg">
+            <h3 className="text-lg font-semibold text-center mb-2">Similarity Score</h3>
+            <div className="grid grid-cols-1 gap-4 text-center">
+              <div>
+                <p className="text-2xl font-bold text-buddy-purple">{(score * 100).toFixed(2)}%</p>
+              </div>
+              
+            </div>
           </div>
         )}
       </CardContent>

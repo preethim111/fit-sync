@@ -21,7 +21,7 @@ const Workout = () => {
   const exercises = {
     easy: ["Basic Squats", "Modified Push-Ups", "Lunges", "Planks"],
     medium: ["Jump Squats", "Push-Ups", "Split Lunges", "Side Planks"],
-    hard: ["Burpees", "Pike Push-Ups", "Bulgarian Split Squats", "Handstand Practice"]
+    hard: ["Burpees", "Pike Push-Ups", "Pistol Squats", "Plank Reach Outs"]
   };
   
   const exerciseList = exercises[difficulty as keyof typeof exercises];
