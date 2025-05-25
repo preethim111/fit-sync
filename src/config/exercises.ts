@@ -8,7 +8,7 @@ export const exerciseVideos: ExerciseVideo[] = [
   // Easy exercises
   {
     name: "Basic Squats",
-    path: "../public/videos/basic_squats.mp4",
+    path: "../public/videos/squat.mp4",
     difficulty: "easy"
   },
   {
@@ -18,12 +18,12 @@ export const exerciseVideos: ExerciseVideo[] = [
   },
   {
     name: "Lunges",
-    path: "/videos/exercises/easy/lunges.mp4",
+    path: "../public/videos/lunges.mp4",
     difficulty: "easy"
   },
   {
     name: "Planks",
-    path: "/videos/exercises/easy/planks.mp4",
+    path: "../public/videos/plank.mp4",
     difficulty: "easy"
   },
 
@@ -39,8 +39,8 @@ export const exerciseVideos: ExerciseVideo[] = [
     difficulty: "medium"
   },
   {
-    name: "Split Lunges",
-    path: "../public/videos/split_lunges.mp4",
+    name: "Jump Lunges",
+    path: "../public/videos/jump_lunges.mp4",
     difficulty: "medium"
   },
   {
@@ -52,22 +52,22 @@ export const exerciseVideos: ExerciseVideo[] = [
   // Hard exercises
   {
     name: "Burpees",
-    path: "/videos/exercises/hard/burpees.mp4",
+    path: "../public/videos/burpees.mp4",
     difficulty: "hard"
   },
   {
     name: "Pike Push-Ups",
-    path: "/videos/exercises/hard/pike-pushups.mp4",
+    path: "../public/videos/pike_pushups.mp4",
     difficulty: "hard"
   },
   {
-    name: "Bulgarian Split Squats",
-    path: "/videos/exercises/hard/bulgarian-split-squats.mp4",
+    name: "Pistol Squats",
+    path: "../public/videos/pistol_squats.mp4",
     difficulty: "hard"
   },
   {
-    name: "Handstand Practice",
-    path: "/videos/exercises/hard/handstand.mp4",
+    name: "Plank Reach Outs",
+    path: "../public/videos/plank_reaches.mp4",
     difficulty: "hard"
   }
 ];
