@@ -55,15 +55,9 @@ const DifficultyCard = ({ title, description, icon, level, exercises }: Difficul
           className={`w-full ${buttonColors[level]}`} 
           onClick={handleCreateRoom}
         >
-          Create Room
+          Start Workout
         </Button>
-        <Button 
-          variant="outline" 
-          className="w-full"
-          onClick={() => navigate(`/join?difficulty=${level}`)}
-        >
-          Join Room
-        </Button>
+        
       </CardFooter>
     </Card>
   );

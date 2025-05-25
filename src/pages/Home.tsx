@@ -33,7 +33,7 @@ const Home = () => {
       description: "Challenging workouts for fitness enthusiasts.",
       icon: <Flame size={24} className="text-red-500" />,
       level: "hard" as const,
-      exercises: ["Burpees", "Pike Push-Ups", "Bulgarian Split Squats", "Handstand Practice"]
+      exercises: ["Burpees", "Pike Push-Ups", "Pistol Squats", "Plank Reach Outs"]
     }
   ];
 
@@ -65,8 +65,7 @@ const Home = () => {
           <section className="mb-10">
             <h2 className="text-3xl font-bold mb-2">Welcome to FitSync</h2>
             <p className="text-gray-600 mb-6">
-              Choose a difficulty level below to start your workout session. You can create
-              a room and invite a buddy, or join an existing room.
+              Choose a difficulty level below to start your workout session. Perfect your form and get stronger with our advanced AI powered similarity feedback algorithm.
             </p>
             
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -82,23 +81,24 @@ const Home = () => {
               ))}
             </div>
           </section>
-          
           <section>
-            <div className="bg-buddy-purple/10 rounded-lg p-6 flex flex-col sm:flex-row items-center gap-6">
-              <div className="flex-1">
-                <h3 className="text-xl font-bold mb-2">Ready for a quick session?</h3>
-                <p className="text-gray-600 mb-4">
-                  Join our community workout room with random exercises tailored to your fitness level.
-                </p>
-                <Button className="bg-buddy-orange hover:bg-buddy-orange/90">
-                  Quick Match
-                </Button>
-              </div>
-              <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-md animate-pulse-scale">
-                <Dumbbell size={48} className="text-buddy-purple" />
-              </div>
+          <div className="bg-buddy-purple/10 rounded-lg p-6 flex flex-col sm:flex-row items-center gap-6">
+            <div className="flex-1">
+              <h3 className="text-xl font-bold mb-2">Train with confidence, wherever you're at.</h3>
+              <p className="text-gray-600 mb-4">
+                Whether you're just getting started or pushing your limits, form matters and confidence does too.
+                Over <span className="font-semibold">50% of people</span> say they’ve felt too intimidated or unsure to step into a gym.
+                That’s why we built this app: to help you refine your movement, build trust in your body, and level up at your own pace.
+                <br />
+                <br />
+                From your first squat to your next PR — <span className="font-semibold">we got you</span>. Welcome to the FitSync community!
+              </p>
             </div>
-          </section>
+            <div className="w-32 h-32 bg-white rounded-full flex items-center justify-center shadow-md animate-pulse-scale">
+              <Dumbbell size={48} className="text-buddy-purple" />
+            </div>
+          </div>
+        </section>
         </div>
       </main>
     </div>

@@ -12,9 +12,13 @@ const Profile = () => {
   const [recentScore, setRecentScore] = useState<number | null>(null);
   const [bestScore, setBestScore] = useState<number | null>(null);
 
+  console.log('User:', user);
   useEffect(() => {
     const fetchScores = async () => {
-      if (!user) return;
+      
+      if (!user?.id) return;
+      
+      console.log('Fetching scores for:', user.id);
 
       try {
         // Fetch recent score
@@ -23,11 +27,12 @@ const Profile = () => {
           .select('most_recent_score, submitted_at')
           .eq('user_id', user.id)
           .order('submitted_at', { ascending: false })
-          .limit(1)
-          .single();
+          .limit(1);
 
-        if (!recentError && recentData) {
-          setRecentScore(recentData.most_recent_score);
+        console.log('Recent Data:', recentData);
+        console.log('Recent Error:', recentError);
+        if (!recentError && recentData && recentData.length > 0) {
+          setRecentScore(recentData[0].most_recent_score);
         }
 
         // Fetch best score
@@ -36,11 +41,10 @@ const Profile = () => {
           .select('most_recent_score')
           .eq('user_id', user.id)
           .order('most_recent_score', { ascending: false })
-          .limit(1)
-          .single();
+          .limit(1);
 
-        if (!bestError && bestData) {
-          setBestScore(bestData.most_recent_score);
+        if (!bestError && bestData && bestData.length > 0) {
+          setBestScore(bestData[0].most_recent_score);
         }
       } catch (error) {
         console.error('Error fetching scores:', error);
@@ -48,7 +52,9 @@ const Profile = () => {
     };
 
     fetchScores();
-  }, [user]);
+  }, [user?.id]);
+
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-buddy-purple-light/30 to-white">
@@ -85,10 +91,10 @@ const Profile = () => {
                   <p className="text-sm text-gray-500">Email</p>
                   <p className="font-medium">{user?.email}</p>
                 </div>
-                <div>
+                {/* <div>
                   <p className="text-sm text-gray-500">Name</p>
                   <p className="font-medium">{user?.user_metadata?.name || 'Not set'}</p>
-                </div>
+                </div> */}
               </div>
             </CardContent>
           </Card>

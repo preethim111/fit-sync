@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/components/ui/use-toast';
 import { useUser } from '@supabase/auth-helpers-react';
 import { POSE_LANDMARKS } from '@mediapipe/pose';
+import { supabase } from '@/lib/supabase';
 
 interface WorkoutTrackerProps {
   referenceVideo?: string;
@@ -434,6 +435,30 @@ const WorkoutTracker = ({ referenceVideo, difficulty, exerciseName }: WorkoutTra
     setScore(score);
     setBestScore(best_score);
     toast({ title: 'Score Submitted', description: `Your score: ${score}\nBest score: ${best_score}` });
+
+    // Fetch recent score
+    const { data: recentData, error: recentError } = await supabase
+      .from('userperformance')
+      .select('most_recent_score, submitted_at')
+      .eq('user_id', user.id)
+      .order('submitted_at', { ascending: false })
+      .limit(1);
+
+    if (recentError) {
+      console.error('Error fetching recent score:', recentError);
+    }
+
+    // Fetch best score
+    const { data: bestData, error: bestError } = await supabase
+      .from('userperformance')
+      .select('most_recent_score')
+      .eq('user_id', user.id)
+      .order('most_recent_score', { ascending: false })
+      .limit(1);
+
+    if (bestError) {
+      console.error('Error fetching best score:', bestError);
+    }
   }
 
   const extractLandmarks = (results: Results) => {
