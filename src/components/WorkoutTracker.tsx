@@ -123,7 +123,7 @@ const WorkoutTracker: React.FC = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:4000/api/score', {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/score`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

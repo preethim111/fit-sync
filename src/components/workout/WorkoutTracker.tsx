@@ -415,7 +415,7 @@ const WorkoutTracker = ({ exerciseName, difficulty }: WorkoutTrackerProps) => {
     const visibilityMatrix = cleanedUser.slice(0, minLength).map(frame => frame.visibility);
 
     console.log('Sending score request to backend');
-    const response = await fetch('http://localhost:4000/api/score', {
+    const response = await fetch('https://fit-sync.onrender.com/api/score', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
