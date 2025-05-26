@@ -16,6 +16,7 @@ const LoginForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  console.log("hello");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
