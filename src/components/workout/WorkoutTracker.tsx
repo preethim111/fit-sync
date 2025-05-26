@@ -132,75 +132,85 @@ const WorkoutTracker = ({ exerciseName, difficulty }: WorkoutTrackerProps) => {
       return;
     }
 
-    const referencePose = new Pose({
-      locateFile: (file) => {
-        console.log('Loading MediaPipe file:', file);
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-      },
-    });
+    const initializePose = async () => {
+      try {
+        const referencePose = new Pose({
+          locateFile: (file) => {
+            console.log('Loading MediaPipe file:', file);
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+          }
+        });
 
-    referencePose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: true,
-      smoothSegmentation: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
+        await referencePose.initialize();
 
-    referencePose.onResults((results) => {
-      if (!referenceCanvasRef.current) return;
-      const canvasCtx = referenceCanvasRef.current.getContext('2d');
-      if (!canvasCtx) return;
-      
-      if (results.poseLandmarks && isRefTracking) {
-        console.log('Reference pose detected, frame count:', frameCount);
-        if (frameCount % FRAME_INTERVAL === 0) {
-          console.log('Reference pose vector:', results.poseLandmarks);
-          setReferencePoseSequence(prev => [...prev, results.poseLandmarks]);
+        referencePose.setOptions({
+          modelComplexity: 1,
+          smoothLandmarks: true,
+          enableSegmentation: true,
+          smoothSegmentation: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
+        });
+
+        referencePose.onResults((results) => {
+          if (!referenceCanvasRef.current) return;
+          const canvasCtx = referenceCanvasRef.current.getContext('2d');
+          if (!canvasCtx) return;
+          
+          if (results.poseLandmarks && isRefTracking) {
+            console.log('Reference pose detected, frame count:', frameCount);
+            if (frameCount % FRAME_INTERVAL === 0) {
+              console.log('Reference pose vector:', results.poseLandmarks);
+              setReferencePoseSequence(prev => [...prev, results.poseLandmarks]);
+            }
+            frameCount++;
+          }
+          canvasCtx.save();
+          canvasCtx.clearRect(0, 0, referenceCanvasRef.current.width, referenceCanvasRef.current.height);
+          canvasCtx.drawImage(results.image, 0, 0, referenceCanvasRef.current.width, referenceCanvasRef.current.height);
+          
+          if (results.poseLandmarks) {
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
+              color: '#4CAF50',
+              lineWidth: 2,
+            });
+            drawLandmarks(canvasCtx, results.poseLandmarks, {
+              color: '#2196F3',
+              lineWidth: 1,
+            });
+          }
+          canvasCtx.restore();
+        });
+
+        // Process reference video frames
+        const processReferenceFrame = async () => {
+          if (referenceVideoRef.current && !referenceVideoRef.current.paused && isRefTracking) {
+            await referencePose.send({ image: referenceVideoRef.current });
+            requestAnimationFrame(processReferenceFrame);
+          }
+        };
+
+        if (isRefTracking) {
+          if (referenceVideoRef.current) {
+            referenceVideoRef.current.play();
+            requestAnimationFrame(processReferenceFrame);
+          }
+        } else {
+          if (referenceVideoRef.current) {
+            referenceVideoRef.current.pause();
+          }
         }
-        frameCount++;
-      }
-      canvasCtx.save();
-      canvasCtx.clearRect(0, 0, referenceCanvasRef.current.width, referenceCanvasRef.current.height);
-      canvasCtx.drawImage(results.image, 0, 0, referenceCanvasRef.current.width, referenceCanvasRef.current.height);
-      
-      if (results.poseLandmarks) {
-        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-          color: '#4CAF50',
-          lineWidth: 2,
-        });
-        drawLandmarks(canvasCtx, results.poseLandmarks, {
-          color: '#2196F3',
-          lineWidth: 1,
-        });
-      }
-      canvasCtx.restore();
-    });
 
-    // Process reference video frames
-    const processReferenceFrame = async () => {
-      if (referenceVideoRef.current && !referenceVideoRef.current.paused && isRefTracking) {
-        await referencePose.send({ image: referenceVideoRef.current });
-        requestAnimationFrame(processReferenceFrame);
+        return () => {
+          console.log('Cleaning up reference pose detection');
+          referencePose.close();
+        };
+      } catch (error) {
+        console.error('Error initializing pose:', error);
       }
     };
 
-    if (isRefTracking) {
-      if (referenceVideoRef.current) {
-        referenceVideoRef.current.play();
-        requestAnimationFrame(processReferenceFrame);
-      }
-    } else {
-      if (referenceVideoRef.current) {
-        referenceVideoRef.current.pause();
-      }
-    }
-
-    return () => {
-      console.log('Cleaning up reference pose detection');
-      referencePose.close();
-    };
+    initializePose();
   }, [isRefTracking]);
 
   // Initialize user video and pose detection
@@ -264,75 +274,83 @@ const WorkoutTracker = ({ exerciseName, difficulty }: WorkoutTrackerProps) => {
     console.log('Initializing user pose detection, isUserTracking:', isUserTracking);
     if (!videoRef.current || !canvasRef.current || !isUserTracking) return;
 
-    const pose = new Pose({
-      locateFile: (file) => {
-        console.log('Loading MediaPipe file for user pose:', file);
-        return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
-      },
-    });
-
-    pose.setOptions({
-      modelComplexity: 1,
-      smoothLandmarks: true,
-      enableSegmentation: true,
-      smoothSegmentation: true,
-      minDetectionConfidence: 0.5,
-      minTrackingConfidence: 0.5,
-    });
-
-    pose.onResults((results) => {
-      if (!canvasRef.current) return;
-      const canvasCtx = canvasRef.current.getContext('2d');
-      if (!canvasCtx) return;
-      
-      if (results.poseLandmarks && isUserTracking) {
-        console.log('User pose detected, frame count:', frameCount);
-        // Only collect landmarks every half second
-        if (frameCount % FRAME_INTERVAL === 0) {
-          console.log('User pose visibility:', results.poseLandmarks.map(lm => lm.visibility));
-          console.log('Collecting user pose frame', results.poseLandmarks);
-          setUserPoseSequence(prev => [...prev, results.poseLandmarks]);
-        }
-        frameCount++;
-      }
-      canvasCtx.save();
-      canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      canvasCtx.drawImage(results.image, 0, 0, canvasRef.current.width, canvasRef.current.height);
-      
-      if (results.poseLandmarks) {
-        // Draw pose landmarks
-        drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
-          color: '#FF4081',  // Pink color for user pose
-          lineWidth: 2,
+    const initializePose = async () => {
+      try {
+        const pose = new Pose({
+          locateFile: (file) => {
+            console.log('Loading MediaPipe file for user pose:', file);
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`;
+          }
         });
-        drawLandmarks(canvasCtx, results.poseLandmarks, {
-          color: '#FF0000',  // Red color for user landmarks
-          lineWidth: 1,
+
+        await pose.initialize();
+
+        pose.setOptions({
+          modelComplexity: 1,
+          smoothLandmarks: true,
+          enableSegmentation: true,
+          smoothSegmentation: true,
+          minDetectionConfidence: 0.5,
+          minTrackingConfidence: 0.5,
         });
-      }
-      canvasCtx.restore();
-    });
 
-    const camera = new Camera(videoRef.current, {
-      onFrame: async () => {
-        if (videoRef.current) {
-          await pose.send({ image: videoRef.current });
+        pose.onResults((results) => {
+          if (!canvasRef.current) return;
+          const canvasCtx = canvasRef.current.getContext('2d');
+          if (!canvasCtx) return;
+          
+          if (results.poseLandmarks && isUserTracking) {
+            console.log('User pose detected, frame count:', frameCount);
+            if (frameCount % FRAME_INTERVAL === 0) {
+              console.log('User pose visibility:', results.poseLandmarks.map(lm => lm.visibility));
+              console.log('Collecting user pose frame', results.poseLandmarks);
+              setUserPoseSequence(prev => [...prev, results.poseLandmarks]);
+            }
+            frameCount++;
+          }
+          canvasCtx.save();
+          canvasCtx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+          canvasCtx.drawImage(results.image, 0, 0, canvasRef.current.width, canvasRef.current.height);
+          
+          if (results.poseLandmarks) {
+            drawConnectors(canvasCtx, results.poseLandmarks, POSE_CONNECTIONS, {
+              color: '#FF4081',
+              lineWidth: 2,
+            });
+            drawLandmarks(canvasCtx, results.poseLandmarks, {
+              color: '#FF0000',
+              lineWidth: 1,
+            });
+          }
+          canvasCtx.restore();
+        });
+
+        const camera = new Camera(videoRef.current, {
+          onFrame: async () => {
+            if (videoRef.current) {
+              await pose.send({ image: videoRef.current });
+            }
+          },
+          width: 640,
+          height: 480,
+        });
+
+        if (isUserTracking) {
+          console.log('Starting camera for pose detection');
+          camera.start();
         }
-      },
-      width: 640,
-      height: 480,
-    });
 
-    if (isUserTracking) {
-      console.log('Starting camera for pose detection');
-      camera.start();
-    }
-
-    return () => {
-      console.log('Cleaning up user pose detection');
-      camera.stop();
-      pose.close();
+        return () => {
+          console.log('Cleaning up user pose detection');
+          camera.stop();
+          pose.close();
+        };
+      } catch (error) {
+        console.error('Error initializing pose:', error);
+      }
     };
+
+    initializePose();
   }, [isUserTracking]);
 
   const startTracking = () => {
