@@ -28,6 +28,7 @@ const DifficultyCard = ({ title, description, icon, level, exercises }: Difficul
 
   const handleCreateRoom = () => {
     // For demo purposes, just navigate to workout page with the difficulty
+    console.log('hello');
     navigate(`/workout?difficulty=${level}`);
   };
 
