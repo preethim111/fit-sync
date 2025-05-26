@@ -52,12 +52,15 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    const clampedScore = Math.max(0, score); // ensures minimum 0
+
+
     // Insert new performance record
     const { error: insertError } = await supabase
       .from('userperformance')
       .insert({
         user_id,
-        most_recent_score: score,
+        most_recent_score: clampedScore,
         submitted_at: new Date().toISOString(),
         difficulty_level: formattedDifficulty
       });

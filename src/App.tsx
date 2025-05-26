@@ -16,23 +16,23 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <SessionContextProvider supabaseClient={supabase}>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <BrowserRouter>
           <AuthProvider>
-            <Routes>
-              <Route path="/" element={<Login />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/workout" element={<WorkoutPage />} />
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/workout" element={<WorkoutPage />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+          <Route path="*" element={<NotFound />} />
+        </Routes>
           </AuthProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </QueryClientProvider>
+      </BrowserRouter>
+    </TooltipProvider>
+  </QueryClientProvider>
   </SessionContextProvider>
 );
 

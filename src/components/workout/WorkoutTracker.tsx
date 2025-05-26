@@ -496,9 +496,9 @@ const WorkoutTracker = ({ exerciseName, difficulty }: WorkoutTrackerProps) => {
           >
             <ArrowLeft size={20} className="text-white" />
           </Button>
-          <CardTitle className="text-2xl font-bold">
-            {exerciseName} - {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
-          </CardTitle>
+        <CardTitle className="text-2xl font-bold">
+          {exerciseName} - {difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}
+        </CardTitle>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

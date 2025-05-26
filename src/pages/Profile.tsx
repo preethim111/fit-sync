@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dumbbell, ArrowLeft } from "lucide-react";
 import { useAuth } from "@/auth/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import SimilarityScoreChart from "@/components/profile/SimilarityScoreChart";
+import WorkoutCountCard from "@/components/profile/WorkoutCountCard";
 
 const Profile = () => {
   const navigate = useNavigate();
@@ -54,8 +56,6 @@ const Profile = () => {
     fetchScores();
   }, [user?.id]);
 
-  
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-buddy-purple-light/30 to-white">
       {/* Header */}
@@ -80,7 +80,7 @@ const Profile = () => {
 
       {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-4xl mx-auto space-y-6">
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>User Information</CardTitle>
@@ -99,6 +99,8 @@ const Profile = () => {
             </CardContent>
           </Card>
 
+          <WorkoutCountCard />
+
           <Card>
             <CardHeader>
               <CardTitle>Performance</CardTitle>
@@ -108,18 +110,20 @@ const Profile = () => {
                 <div>
                   <p className="text-sm text-gray-500">Most Recent Score</p>
                   <p className="font-medium text-2xl">
-                    {recentScore !== null ? recentScore.toFixed(2) : 'No scores yet'}
+                    {recentScore !== null ? (recentScore * 100).toFixed(2) + '%' : 'No scores yet'}
                   </p>
                 </div>
                 <div>
                   <p className="text-sm text-gray-500">Best Score</p>
                   <p className="font-medium text-2xl">
-                    {bestScore !== null ? bestScore.toFixed(2) : 'No scores yet'}
+                    {bestScore !== null ? (bestScore * 100).toFixed(2) + '%' : 'No scores yet'}
                   </p>
                 </div>
               </div>
             </CardContent>
           </Card>
+
+          <SimilarityScoreChart />
         </div>
       </main>
     </div>

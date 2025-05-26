@@ -12,7 +12,7 @@ const Login = () => {
         </div>
         <h1 className="text-4xl font-bold gradient-text mb-2">FitSync</h1>
         <p className="text-center text-gray-600">
-          Workout with a buddy, get real-time feedback, and improve together
+        Refine your movement, build trust in your body, and level up at your own pace!
         </p>
       </div>
       
