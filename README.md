@@ -12,10 +12,28 @@ FitSync is a real-time fitness web application that uses computer vision to prov
 - 🖥️ **Responsive UI**: Built with React, TypeScript, and Tailwind CSS
 
 
-## 🛠️ Tech Stack
+## 🚀 Tech Stack
 
-| Frontend      | Backend        | ML & Vision          | Auth & DB     | 
-|---------------|----------------|----------------------|----------------|------------------|
-| React, TypeScript, Tailwind CSS | Express.js (Node.js) | MediaPipe, TensorFlow.js | Supabase      
+### 🖥️ Frontend
+- **React.js** – Component-based UI
+- **TypeScript** – Type-safe JavaScript
+- **Tailwind CSS** – Utility-first styling
+- **Vite** – Fast build tool and dev server
+
+### 🧠 Pose Detection & ML
+- **MediaPipe (Pose)** – Real-time pose estimation
+- **TensorFlow.js** – In-browser ML computations
+- **Custom Algorithm** – Weighted cosine similarity for pose matching
+
+### 🔐 Auth & Data
+- **Supabase** – Authentication, real-time DB, and storage (PostgreSQL)
+
+### 🌐 Backend
+- **Node.js** – JavaScript runtime
+- **Express.js** – API routing and scoring logic
+
+### ☁️ Deployment
+- **Vercel** – Frontend hosting
+- **Render** – Backend deployment with CORS setup
 
 
