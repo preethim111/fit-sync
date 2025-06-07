@@ -1,73 +1,21 @@
-# Welcome to your Lovable project
+# FitSync
 
-## Project info
+FitSync is a real-time fitness web application that uses computer vision to provide instant feedback on exercise form by comparing user movements with reference poses. Using MediaPipe for pose detection and TensorFlow.js for similarity scoring, FitSync helps users refine their workout technique through visual and quantitative feedback.
 
-**URL**: https://lovable.dev/projects/1d52295e-14e6-4ac0-a395-0b53125354a3
+## 🔥 Features
 
-## How can I edit this code?
+- 🎥 **Real-Time Pose Detection**: Uses MediaPipe to track 12 limb vectors from live webcam input.
+- 🧠 **Pose Comparison Algorithm**: Custom scoring using weighted cosine similarity between user and reference poses.
+- 📊 **Performance Feedback**: Instant numerical score displayed for each frame to assess form accuracy.
+- 👤 **User Authentication**: Secure sign-in/sign-up powered by Supabase.
+- 📈 **Progress Tracking**: Stores user scores, best attempts, and timestamps for long-term tracking.
+- 🖥️ **Responsive UI**: Built with React, TypeScript, and Tailwind CSS
 
-There are several ways of editing your application.
 
-**Use Lovable**
+## 🛠️ Tech Stack
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/1d52295e-14e6-4ac0-a395-0b53125354a3) and start prompting.
+| Frontend      | Backend        | ML & Vision          | Auth & DB     | 
+|---------------|----------------|----------------------|----------------|------------------|
+| React, TypeScript, Tailwind CSS | Express.js (Node.js) | MediaPipe, TensorFlow.js | Supabase      
 
-Changes made via Lovable will be committed automatically to this repo.
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/1d52295e-14e6-4ac0-a395-0b53125354a3) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
